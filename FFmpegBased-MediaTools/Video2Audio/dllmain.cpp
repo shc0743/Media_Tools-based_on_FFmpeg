@@ -250,6 +250,9 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 				EnableWindow(hw, false);
 			}
+			EnableWindow(data->hList1, true);
+			DragAcceptFiles(hwnd, false);
+
 
 			
 			if (!CloseHandleIfOk(CreateThread(0, 0, [](PVOID pdata)->DWORD {
@@ -269,6 +272,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 						EnableWindow(hw, true);
 					}
+					DragAcceptFiles(hwnd, true);
 					return 87;
 				}
 				wstring cl, wtmp;
@@ -337,6 +341,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 						while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 							EnableWindow(hw, true);
 						}
+						DragAcceptFiles(hwnd, true);
 						return -1;
 					}
 					DWORD code = -1;
@@ -370,6 +375,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 					EnableWindow(hw, true);
 				}
+				DragAcceptFiles(hwnd, true);
 				return 0;
 			}, data, 0, 0))) {
 				MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
@@ -377,8 +383,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 					EnableWindow(hw, true);
 				}
+				DragAcceptFiles(hwnd, true);
 			}
-
 		}
 			break;
 

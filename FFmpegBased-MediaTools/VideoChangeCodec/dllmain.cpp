@@ -261,6 +261,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 				EnableWindow(hw, false);
 			}
+			EnableWindow(data->hList1, true);
+			DragAcceptFiles(hwnd, false);
 
 			
 			if (!CloseHandleIfOk(CreateThread(0, 0, [](PVOID pdata)->DWORD {
@@ -287,6 +289,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 						EnableWindow(hw, true);
 					}
+					DragAcceptFiles(hwnd, true);
 					return 87;
 				}
 				bProcessDoing = true;
@@ -377,6 +380,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 							EnableWindow(hw, true);
 						}
 						DeleteMprgObject(hObj);
+						DragAcceptFiles(hwnd, true);
 						bProcessDoing = false;
 						return -1;
 					}
@@ -417,6 +421,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					EnableWindow(hw, true);
 				}
 				bProcessDoing = false;
+				DragAcceptFiles(hwnd, true);
 				return 0;
 			}, data, 0, 0))) {
 				MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
@@ -424,6 +429,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 					EnableWindow(hw, true);
 				}
+				DragAcceptFiles(hwnd, true);
 			}
 
 		}

@@ -162,6 +162,9 @@
   <ItemGroup>
     <Image Include="..\..\assets\a9me7-60nnt-001.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\bin\MTLAddTool64.dll" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
