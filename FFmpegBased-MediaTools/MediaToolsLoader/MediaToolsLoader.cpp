@@ -7,8 +7,6 @@
 #include "../../resource/tool.h"
 #include "ui.main.h"
 #include "app.dllapp.h"
-#include "wizard.user.h"
-#pragma comment(lib, "MyProgressWizardLib64.lib")
 using namespace std;
 
 
@@ -19,8 +17,6 @@ int main()
 	CmdLineW cl(GetCommandLineW());
 
 	wstring type; cl.getopt(L"type", type);
-
-	InitMprgComponent();
 	
 	
 
@@ -32,6 +28,18 @@ int main()
 		wstring appType; cl.getopt(L"app-type", appType);
 		if (appType == L"dll") {
 			return DllAppMain(cl);
+		}
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	if (cl.argc() > 1) {
+		const auto& filename = cl[1];
+		if (file_exists(filename)) {
+			if (filename.ends_with(L".MTL.dll")) {
+				return (int)Process.StartAndWait(L"\"" + GetProgramDirW() +
+					L"\" --type=app --app-type=dll --dll-host-type="
+					"default --dll-file=\"" + filename + L"\" ");
+			}
 		}
 		return ERROR_INVALID_PARAMETER;
 	}

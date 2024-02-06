@@ -4,8 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MediaToolsLoader", "MediaToolsLoader\MediaToolsLoader.vcxproj", "{4817251F-01E3-407B-A57C-8FEBB45322D8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1692AE14-66D1-409F-BF1F-6D24A658058F} = {1692AE14-66D1-409F-BF1F-6D24A658058F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Video2Audio", "Video2Audio\Video2Audio.vcxproj", "{98743D7D-A71D-44C2-8C2F-4E09E9BEE3AF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VideoChangeCodec", "VideoChangeCodec\VideoChangeCodec.vcxproj", "{4413A40A-6532-49C2-ACA7-06F7501B33C1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MTLAddTool", "MTLAddTool\MTLAddTool.vcxproj", "{1692AE14-66D1-409F-BF1F-6D24A658058F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +38,22 @@ Global
 		{98743D7D-A71D-44C2-8C2F-4E09E9BEE3AF}.Release|x64.Build.0 = Release|x64
 		{98743D7D-A71D-44C2-8C2F-4E09E9BEE3AF}.Release|x86.ActiveCfg = Release|Win32
 		{98743D7D-A71D-44C2-8C2F-4E09E9BEE3AF}.Release|x86.Build.0 = Release|Win32
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Debug|x64.ActiveCfg = Debug|x64
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Debug|x64.Build.0 = Debug|x64
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Debug|x86.ActiveCfg = Debug|Win32
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Debug|x86.Build.0 = Debug|Win32
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Release|x64.ActiveCfg = Release|x64
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Release|x64.Build.0 = Release|x64
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Release|x86.ActiveCfg = Release|Win32
+		{4413A40A-6532-49C2-ACA7-06F7501B33C1}.Release|x86.Build.0 = Release|Win32
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Debug|x64.ActiveCfg = Debug|x64
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Debug|x64.Build.0 = Debug|x64
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Debug|x86.ActiveCfg = Debug|Win32
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Debug|x86.Build.0 = Debug|Win32
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Release|x64.ActiveCfg = Release|x64
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Release|x64.Build.0 = Release|x64
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Release|x86.ActiveCfg = Release|Win32
+		{1692AE14-66D1-409F-BF1F-6D24A658058F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

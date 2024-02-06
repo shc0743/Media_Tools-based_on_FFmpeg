@@ -1,0 +1,14 @@
+LIBRARY
+
+
+EXPORTS
+	InitMprgComponent
+	CreateMprgObject
+	CreateMprgWizard
+	OpenMprgWizard
+	GetModifiableMprgWizardData
+	SetMprgWizardValue
+	SetMprgWizardText
+	DeleteMprgObject
+	GetMprgHwnd
+	UpdateMprgWizard

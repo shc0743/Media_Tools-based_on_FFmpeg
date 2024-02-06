@@ -1,6 +1,5 @@
 #include "ui.main.h"
 #include <uxtheme.h>
-#include "wizard.user.h"
 #include "../info.h"
 using namespace std;
 
@@ -13,6 +12,10 @@ using namespace std;
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
+// Unhandled Exception Filter
+static LONG WINAPI MyTopLevelExceptionFliter(
+	_In_ PEXCEPTION_POINTERS ExceptionInfo
+);
 
 static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPARAM lp);
 
@@ -21,6 +24,7 @@ typedef struct {
 		hList1,
 		hBtnOpen,
 		hBtnQuit;
+	UINT bSafeMode;
 } WndData_MainWnd,*WndDataP_MainWnd;
 
 
@@ -33,15 +37,137 @@ static void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel);
 
 
 
+#pragma region wizard
+
+DECLARE_HANDLE(HMPRGOBJ); // Handle: MyProgressWizard Object
+DECLARE_HANDLE(HMPRGWIZ); // Handle: MyProgressWizard Wizard
+
+enum class MPRG_WIZARD_EXTENSIBLE_ATTRIBUTES {
+	NotApplicable = 0,
+	WizAttrTopmost = 0x1001,
+	WizAttrUnresizable = 0x1002,
+	WizAttrCancelHandler = 0x8001,
+};
+
+class MPRG_CREATE_PARAMS {
+public:
+	size_t cb;
+
+	long width, height;
+	int type;
+	PCWSTR szTitle;
+	PCWSTR szText;
+	HWND hParentWindow;
+
+	size_t max, value;
+
+};
+class MPRG_WIZARD_DATA {
+public:
+	size_t cb;
+
+	long width, height;
+	int type;
+
+	std::map<MPRG_WIZARD_EXTENSIBLE_ATTRIBUTES, LONG_PTR>* attrs;
+
+	size_t max, value;
+	PCWSTR szText;
+
+	HWND hwTipText, hwProgBar, hwCancelBtn;
+};
+using PMPRG_WIZARD_DATA = MPRG_WIZARD_DATA*;
+
+using TMprgCancelHandler = bool(__stdcall*) (HMPRGWIZ hWiz, HMPRGOBJ hObj);
+
+
+#pragma endregion
+
+#pragma region wizard-func
+bool (*InitMprgComponent)();
+HMPRGOBJ(*CreateMprgObject)();
+HMPRGWIZ(*CreateMprgWizard)(HMPRGOBJ hObject, MPRG_CREATE_PARAMS params, DWORD dwTimeout);
+PMPRG_WIZARD_DATA(*GetModifiableMprgWizardData)(HMPRGWIZ hWizard);
+bool (*SetMprgWizardValue)(HMPRGWIZ hWizard, size_t currentValue);
+bool (*SetMprgWizardText)(HMPRGWIZ hWizard, PCWSTR psz);
+DWORD(*DeleteMprgObject)(HMPRGOBJ hObject, bool bForceTerminateIfTimeout);
+bool (*OpenMprgWizard)(HMPRGWIZ hWizard, int nShow);
+HWND(*GetMprgHwnd)(HMPRGWIZ hWizard);
+bool (*UpdateMprgWizard)(HMPRGWIZ hWizard);
+bool initProgDll() {
+	constexpr auto file = L"MTLProgressUiPlugin.dll";
+	if (!FreeResFile(IDR_BIN_PROGRESS_PLUGIN, L"BIN", file)) return false;
+	HMODULE h = LoadLibraryW(file);
+	if (!h) return false;
+#define declare(x) x = reinterpret_cast<decltype(x)>(GetProcAddress(h, #x));
+	declare(InitMprgComponent);
+	declare(CreateMprgObject);
+	declare(CreateMprgWizard);
+	declare(GetModifiableMprgWizardData);
+	declare(SetMprgWizardValue);
+	declare(SetMprgWizardText);
+	declare(DeleteMprgObject);
+	declare(OpenMprgWizard);
+	declare(GetMprgHwnd);
+	declare(UpdateMprgWizard);
+
+
+	InitMprgComponent();
+#undef declare
+	return true;
+}
+#pragma endregion
+
+
+
+
 int UiMain(CmdLineW& cl) {
 	INITCOMMONCONTROLSEX icce{};
 	icce.dwSize = sizeof(icce);
-	icce.dwICC = 0xffff;
+	icce.dwICC = ICC_ALL_CLASSES;
 	{void(0); }
 	if (!InitCommonControlsEx(&icce)) {
 		return GetLastError();
 	}
 
+	// 安全模式
+	bool bIsSafeMode = false;
+	if (cl.getopt(L"unexpected-exception-restart")) {
+
+		if (IDCANCEL != MessageBoxW(GetForegroundWindow(), DoesUserUsesChinese() ?
+			L"Media Tools Loader 遇到异常，是否在安全模式中运行？\n"
+			"这将临时禁用所有已添加的工具，以便进行故障排查。" :
+			L"Media Tools Loader encountered an exception. Do you want to "
+			"run it in safe mode?\nThis will temporarily disable all added"
+			"tools to do troubleshoot.", L"Media Tools Loader",
+			MB_ICONQUESTION | MB_OKCANCEL))
+			bIsSafeMode = true;
+
+	}
+	SetUnhandledExceptionFilter(MyTopLevelExceptionFliter);
+
+	// 设置当前目录
+	SetCurrentDirectoryW(GetProgramPathW().c_str());
+	wstring dataPath = s2ws(GetProgramInfo().name + ".data");
+	if (IsFileOrDirectory(dataPath) == 0)
+		CreateDirectoryW(dataPath.c_str(), 0);
+	if (!SetCurrentDirectoryW(dataPath.c_str())) {
+		MessageBoxW(0, LastErrorStrW().c_str(), 0, MB_ICONHAND);
+		return GetLastError();
+	}
+	dataPath = L"apps";
+	if (IsFileOrDirectory(dataPath) == 0)
+		CreateDirectoryW(dataPath.c_str(), 0);
+	if (!SetCurrentDirectoryW(dataPath.c_str())) {
+		MessageBoxW(0, LastErrorStrW().c_str(), 0, MB_ICONHAND);
+		return GetLastError();
+	}
+	SetCurrentDirectoryW(L"..");
+
+	// 进度条初始化
+	initProgDll();
+	
+	// 窗口类注册 
 	HICON hIcon = LoadIconW(GetModuleHandle(NULL), MAKEINTRESOURCEW(IDI_ICON_APP));
 	HBRUSH hBg = CreateSolidBrush(RGB(0xF0, 0xF0, 0xF0));
 	ghFont = CreateFontW(-14, -7, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET,
@@ -53,8 +179,24 @@ int UiMain(CmdLineW& cl) {
 		.hIconSm=hIcon,
 	});
 
+	// 支持重新启动管理器 (Restart Manager)
+	if (cl.getopt(L"no-restart") == 0) {
+		wstring rc; cl.getopt(L"restart-count", rc);
+		size_t rcc = 0;
+		if (!rc.empty()) rcc = atoll(ws2c(rc));
+		wstring c = L"\"" + GetProgramDirW() + L"\" --type=ui --restart-by-"
+			"restart-manager --restart-count=" + to_wstring(rcc + 1);
+
+		auto result = RegisterApplicationRestart(c.c_str(), 0);
+		if (S_OK != result) {
+			SetLastError(result);
+			// 支持失败
+		}
+	}
+
 	// 创建窗口  
 	WndData_MainWnd wd{};
+	wd.bSafeMode = bIsSafeMode;
 	HWND hwnd = CreateWindowExW(0, MTL_MainWndClass, 
 		DoesUserUsesChinese() ? L"媒体工具加载器" : L"Media Tools Loader",
 		WS_OVERLAPPEDWINDOW,
@@ -66,8 +208,8 @@ int UiMain(CmdLineW& cl) {
 	}
 
 	// 显示窗口 
-	ShowWindow(hwnd, SW_NORMAL);
 	CenterWindow(hwnd);
+	ShowWindow(hwnd, SW_NORMAL);
 
 	// 消息循环  
 	MSG msg = { 0 };
@@ -99,9 +241,19 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 #include "ctls.h"
 		dat->hList1 = custom(L"", WC_LISTVIEW, 0, 0, 1, 1,
 			LVS_SINGLESEL | LVS_REPORT | WS_BORDER);
-		dat->hBtnOpen = button(DoesUserUsesChinese() ? L"打开 (&O)" : L"&Open", IDOK);
-		dat->hBtnQuit = button(DoesUserUsesChinese() ? L"退出 (&Q)" : L"&Quit", IDCANCEL);
+		dat->hBtnOpen = button(DoesUserUsesChinese() ?
+			L"打开 (&O)" : L"&Open", IDOK);
+		dat->hBtnQuit = button(DoesUserUsesChinese() ?
+			L"退出 (&Q)" : L"&Quit", IDCANCEL);
 
+		if (dat->bSafeMode) {
+			WCHAR wcsTitle[256]{}, wcsExtendedBuffer[300]{};
+			GetWindowTextW(hwnd, wcsTitle, 256);
+			wcscpy_s(wcsExtendedBuffer, DoesUserUsesChinese() ?
+				L"[安全模式] " : L"[Safe Mode] ");
+			wcscat_s(wcsExtendedBuffer, wcsTitle);
+			SetWindowTextW(hwnd, wcsExtendedBuffer);
+		}
 		PostMessage(hwnd, WM_USER + 0xf0, 0, 0);
 
 	}
@@ -167,41 +319,30 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			L"从本地文件添加工具..." : L"Add tools from local file...");
 		ListView_InsertItem(data->hList1, &lvI);
 
+		if (data->bSafeMode > 1) {
+			if (MessageBoxW(hwnd, DoesUserUsesChinese() ? L"要退出安全模式吗"
+				"？" : L"Quit the Safe Mode?", L"Question", MB_OKCANCEL)
+				== IDOK) data->bSafeMode = false;
+		}
+		if (data->bSafeMode) { return ++data->bSafeMode; }
 		HMPRGOBJ hObj = CreateMprgObject();
 		HMPRGWIZ hWiz = CreateMprgWizard(hObj, MPRG_CREATE_PARAMS{
 			.max = size_t(-1),
-		});
-		OpenMprgWizard(hWiz);
+		}, 30000);
+		OpenMprgWizard(hWiz, SW_NORMAL);
 		PMPRG_WIZARD_DATA progressData = GetModifiableMprgWizardData(hWiz);
 		AssertEx_AutoHandle(progressData);
-
-		SetCurrentDirectoryW(GetProgramPathW().c_str());
-		wstring dataPath = s2ws(GetProgramInfo().name + ".data");
-		if (IsFileOrDirectory(dataPath) == 0)
-			CreateDirectoryW(dataPath.c_str(), 0);
-		if (!SetCurrentDirectoryW(dataPath.c_str())) {
-			MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONHAND);
-			DeleteMprgObject(hObj);
-			break;
-		}
-		dataPath = L"apps";
-		if (IsFileOrDirectory(dataPath) == 0)
-			CreateDirectoryW(dataPath.c_str(), 0);
-		if (!SetCurrentDirectoryW(dataPath.c_str())) {
-			MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONHAND);
-			DeleteMprgObject(hObj);
-			break;
-		}
 
 		wstring fn;
 
 		WIN32_FIND_DATAW findd{};
-		HANDLE hFind = FindFirstFileW((L"./*"), &findd);
+		HANDLE hFind = FindFirstFileW((L"./apps/*"), &findd);
 		if (!hFind || hFind == INVALID_HANDLE_VALUE) {
 			MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONHAND);
-			DeleteMprgObject(hObj);
+			DeleteMprgObject(hObj, true);
 			break;
 		}
+		SetCurrentDirectoryW(L"apps");
 		do {
 			if (wcscmp(findd.cFileName, L".") == 0 ||
 				wcscmp(findd.cFileName, L"..") == 0) continue;
@@ -231,7 +372,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				__except (EXCEPTION_EXECUTE_HANDLER) {
 					return false;
 				}
-			}(fn.c_str(), &dllinfo);
+			}((fn).c_str(), &dllinfo);
 #undef die
 			if (!dllinfo.cb) {
 				// error occurred
@@ -249,7 +390,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		} while (FindNextFileW(hFind, &findd));
 		FindClose(hFind);
 
-		DeleteMprgObject(hObj);
+		SetCurrentDirectoryW(L"..");
+		DeleteMprgObject(hObj, true);
 	}
 		break;
 
@@ -330,9 +472,9 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		HMPRGOBJ hObj = CreateMprgObject();
 		HMPRGWIZ hWiz = CreateMprgWizard(hObj, MPRG_CREATE_PARAMS{
 			.szTitle = L"Add tool(s)",
-			.max = size_t(-1) });
+			.max = size_t(-1) }, 30000);
 		if (!hWiz) return AssertEx(hWiz);
-		OpenMprgWizard(hWiz);
+		OpenMprgWizard(hWiz, SW_NORMAL);
 
 		SetMprgWizardText(hWiz, L"Processing...");
 
@@ -354,7 +496,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				+ L"] Adding " + szFilePath);
 			SetMprgWizardText(hWiz, wcsTemp.c_str());
 			AddTool(hwnd, szFilePath);
-			SetMprgWizardValue(hWiz, i + 1);
+			SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1);
 		}
 
 		// 释放拖放文件结构占用的内存  
@@ -366,7 +508,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			(L"成功添加了 " + sfc + L" 个工具。").c_str() :
 			(L"Successfully added " + sfc + L" tools.").c_str(),
 			L"Success", MB_ICONINFORMATION, 0, 1000);
-		DeleteMprgObject(hObj);
+		DeleteMprgObject(hObj, true);
 	}
 		break;
 
@@ -399,7 +541,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 
 static void AddTool(HWND hwnd, LPCWSTR lpTool) {
-	wstring newFileName = GenerateUUIDW() + L".MTL.dll";
+	wstring newFileName = L"apps/" + GenerateUUIDW() + L".MTL.dll";
 	CopyFileW(lpTool, newFileName.c_str(), FALSE);
 }
 
@@ -420,9 +562,12 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 
 	STARTUPINFOW si{}; PROCESS_INFORMATION pi{};
 	si.cb = sizeof(si);
+	WCHAR lpcd[2048]{};
+	GetCurrentDirectoryW(2048, lpcd);
+	wcscat_s(lpcd, L"\\apps");
 
 	if (!CreateProcessW(GetProgramDirW().c_str(), szFilename, 0, 0, 0,
-		CREATE_SUSPENDED, 0, 0, &si, &pi))
+		CREATE_SUSPENDED, 0, lpcd, &si, &pi))
 	{
 		MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
 		return;
@@ -453,6 +598,7 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 		CloseHandle(t->hProcess);
 
 		ShowWindow(t->hwnd, SW_NORMAL);
+		SetForegroundWindow(t->hwnd);
 
 		if (dwExitCode != 0) {
 			MessageBoxW(t->hwnd, ErrorCodeToStringW(dwExitCode).c_str(),
@@ -463,5 +609,53 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 	}, t, 0, 0));
 }
 
+
+
+
+static LONG WINAPI MyTopLevelExceptionFliter(_In_ PEXCEPTION_POINTERS ExceptionInfo) {
+	//MessageBoxW(NULL, L"Unhandled Exception.\nClick [OK] to terminate process.",
+	//	NULL, MB_ICONERROR);
+	//if (ExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_STACK_OVERFLOW ||
+	//	ExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_STACK_INVALID ||
+	//	ExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_INVALID_DISPOSITION
+	//) return EXCEPTION_CONTINUE_SEARCH;
+	FILE* fp = NULL;
+	string fn = GetProgramInfo().name + "." + to_string(GetCurrentProcessId())
+		+ ".crash_report";
+	fopen_s(&fp, (fn).c_str(), "w+");
+	if (fp) {
+		auto _ContextRecord_size = sizeof(*(ExceptionInfo->ContextRecord));
+		auto _ExcepRecord_size = sizeof(*(ExceptionInfo->ExceptionRecord));
+		fprintf_s(fp, "An unhandled exception occurred.\n"
+			"\nException information:\n"
+			"    Exception Code: 0x%X\n"
+			"    Exception Address: %p\n"
+			"    Exception Flags: 0x%X\n"
+			"    Full dump: [size: %llu]\n"
+			"[BEGIN EXCEPTION INFORMATION]\n"
+			, ExceptionInfo->ExceptionRecord->ExceptionCode
+			, ExceptionInfo->ExceptionRecord->ExceptionAddress
+			, ExceptionInfo->ExceptionRecord->ExceptionFlags
+			, ((unsigned long long)_ExcepRecord_size)
+		);
+		fwrite(ExceptionInfo->ExceptionRecord, _ExcepRecord_size, 1, fp);
+		fprintf_s(fp, "\n[END EXCEPTION INFORMATION]\n"
+			"\nContext Information:\n"
+			"    structure size: %llu\n"
+			"[BEGIN CONTEXT INFORMATION]\n"
+			, ((unsigned long long)_ContextRecord_size));
+		fwrite(ExceptionInfo->ContextRecord, _ContextRecord_size, 1, fp);
+		fprintf_s(fp, "\n[END CONTEXT INFORMATION]\n\n");
+		fclose(fp);
+	}
+	/* 重新启动 */
+	{
+		wstring cl = L"\"" + GetProgramDirW() + L"\" --type=ui "
+			"--unexpected-exception-restart --report-file=\"" +
+			s2ws(fn) + L"\" ";
+		Process.StartOnly(cl);
+	}
+	return EXCEPTION_CONTINUE_SEARCH;
+}
 
 
