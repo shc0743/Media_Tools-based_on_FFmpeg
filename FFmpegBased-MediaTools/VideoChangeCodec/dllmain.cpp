@@ -127,6 +127,11 @@ int __stdcall AppEntry(PCWSTR lpstrCmdLine) {
 }
 
 
+bool bProcessDoing = false;
+bool bProcessCancelled = false;
+HANDLE hProcessDuring;
+
+
 // 窗口过程函数  
 #include <shellapi.h>
 static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
@@ -261,6 +266,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			if (!CloseHandleIfOk(CreateThread(0, 0, [](PVOID pdata)->DWORD {
 				WndDataP_MainWnd data = (WndDataP_MainWnd)pdata;
 				HWND hwnd = data->hwndRoot;
+				bProcessCancelled = false;
 
 				HMPRGOBJ hObj = CreateMprgObject();
 				HMPRGWIZ hWiz = CreateMprgWizard(hObj, MPRG_CREATE_PARAMS{
@@ -283,6 +289,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					}
 					return 87;
 				}
+				bProcessDoing = true;
 				wstring cl, wtmp;
 				STARTUPINFOW si{}; PROCESS_INFORMATION pi{};
 				si.cb = sizeof(si);
@@ -297,6 +304,13 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					EnableMenuItem(hMenu, SC_CLOSE, MF_GRAYED | MF_DISABLED);
 					si.wShowWindow = SW_NORMAL;
 				}
+				SetMprgWizAttribute(hWiz, MPRG_WIZARD_EXTENSIBLE_ATTRIBUTES::
+					WizAttrCancelHandler, (LONG_PTR)(void*)(bool(*)())([] {
+						bProcessCancelled = true;
+						if (hProcessDuring)
+							TerminateProcess(hProcessDuring, ERROR_CANCELLED);
+						return true;
+					}));
 				for (int i = 0, l = ListView_GetItemCount(data->hList1); i < l; ++i) {
 					ListView_SetItemText(data->hList1, i, 1, processing);
 					ListView_GetItemText(data->hList1, i, 0, buffer, 2048);
@@ -363,12 +377,15 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 							EnableWindow(hw, true);
 						}
 						DeleteMprgObject(hObj);
+						bProcessDoing = false;
 						return -1;
 					}
 					DWORD code = -1;
+					hProcessDuring = pi.hProcess;
 					WaitForSingleObject(pi.hProcess, INFINITE);
 					GetExitCodeProcess(pi.hProcess, &code);
 					CloseHandle(pi.hThread);
+					hProcessDuring = NULL;
 					CloseHandle(pi.hProcess);
 					if (code != 0) {
 						cl = L"Failed - error code " + to_wstring(code);
@@ -380,6 +397,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 						ListView_SetItemText(data->hList1, i, 1, done);
 					}
 					SetMprgWizardValue(hWiz, size_t(i) + 1);
+					if (bProcessCancelled) break;
 				}
 
 				DeleteMprgObject(hObj);
@@ -398,6 +416,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 					EnableWindow(hw, true);
 				}
+				bProcessDoing = false;
 				return 0;
 			}, data, 0, 0))) {
 				MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
@@ -483,6 +502,11 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			rc.bottom - rc.top - 40, 80, 30, SWP_NOACTIVATE);
 
 	}
+		break;
+
+	case WM_CLOSE:
+		if (bProcessDoing) break;
+		DestroyWindow(hwnd);
 		break;
 
 	case WM_DESTROY:
