@@ -317,11 +317,11 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					if (extStart) { // 保留原来的扩展名
 						wstring ext = wtmp.substr(extStart);
 						wtmp.erase(extStart);
-						wtmp += L"-changecodec";
+						wtmp += L"-C";
 						wtmp += ext;
 					}
 					else {
-						wtmp += L"-changecodec.mp4";
+						wtmp += L"-C.mp4";
 					}
 					cl += outdir;
 					if (!cl.ends_with(L"\\")) cl += L"\\";
@@ -330,8 +330,6 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 					wcscpy_s(buffer, cl.c_str());
 					SetMprgWizardText(hWiz, cl.c_str());
-					if (i == 0 && l <= 1) 
-						SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1);
 					if (bShowConsole) {
 						DWORD n = 0;
 						WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
@@ -342,7 +340,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 							L"\n", 1, &n, 0);
 					}
 					if (!CreateProcessW(NULL, buffer, 0, 0, 0, 
-						0, 0, 0, &si, &pi)) {
+						ABOVE_NORMAL_PRIORITY_CLASS, 0, 0, &si, &pi)) {
 						if (bShowConsole) {
 							GetSystemMenu(GetConsoleWindow(), true);
 							FreeConsole();
@@ -381,7 +379,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					else {
 						ListView_SetItemText(data->hList1, i, 1, done);
 					}
-					SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1);
+					SetMprgWizardValue(hWiz, size_t(i) + 1);
 				}
 
 				DeleteMprgObject(hObj);

@@ -315,7 +315,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 							L"\n", 1, &n, 0);
 					}
 					if (!CreateProcessW(NULL, buffer, 0, 0, 0, 
-						0, 0, 0, &si, &pi)) {
+						HIGH_PRIORITY_CLASS, 0, 0, &si, &pi)) {
 						if (bShowConsole) {
 							GetSystemMenu(GetConsoleWindow(), true);
 							FreeConsole();

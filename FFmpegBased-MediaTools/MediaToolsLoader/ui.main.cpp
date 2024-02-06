@@ -86,7 +86,7 @@ using TMprgCancelHandler = bool(__stdcall*) (HMPRGWIZ hWiz, HMPRGOBJ hObj);
 #pragma region wizard-func
 bool (*InitMprgComponent)();
 HMPRGOBJ(*CreateMprgObject)();
-HMPRGWIZ(*CreateMprgWizard)(HMPRGOBJ hObject, MPRG_CREATE_PARAMS params, DWORD dwTimeout);
+HMPRGWIZ(*CreateMprgWizard)(HMPRGOBJ hObject, MPRG_CREATE_PARAMS, DWORD dwTimeout);
 PMPRG_WIZARD_DATA(*GetModifiableMprgWizardData)(HMPRGWIZ hWizard);
 bool (*SetMprgWizardValue)(HMPRGWIZ hWizard, size_t currentValue);
 bool (*SetMprgWizardText)(HMPRGWIZ hWizard, PCWSTR psz);
@@ -96,7 +96,8 @@ HWND(*GetMprgHwnd)(HMPRGWIZ hWizard);
 bool (*UpdateMprgWizard)(HMPRGWIZ hWizard);
 bool initProgDll() {
 	constexpr auto file = L"MTLProgressUiPlugin.dll";
-	if (!FreeResFile(IDR_BIN_PROGRESS_PLUGIN, L"BIN", file)) return false;
+	if (!FreeResFile(IDR_BIN_PROGRESS_PLUGIN, L"BIN", file)) // 先尝试覆盖
+		if (!file_exists(file)) return false; // 覆盖失败
 	HMODULE h = LoadLibraryW(file);
 	if (!h) return false;
 #define declare(x) x = reinterpret_cast<decltype(x)>(GetProcAddress(h, #x));
@@ -165,7 +166,11 @@ int UiMain(CmdLineW& cl) {
 	SetCurrentDirectoryW(L"..");
 
 	// 进度条初始化
-	initProgDll();
+	if (!initProgDll()) {
+		if (IDYES == MessageBoxTimeoutW(0, L"Error: Cannot load progress bar"
+			" component.\nExit?", 0, MB_ICONERROR | MB_YESNO, 0, 5000))
+		return GetLastError();
+	}
 	
 	// 窗口类注册 
 	HICON hIcon = LoadIconW(GetModuleHandle(NULL), MAKEINTRESOURCEW(IDI_ICON_APP));
@@ -612,7 +617,8 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 
 
 
-static LONG WINAPI MyTopLevelExceptionFliter(_In_ PEXCEPTION_POINTERS ExceptionInfo) {
+static LONG WINAPI MyTopLevelExceptionFliter(
+	_In_ PEXCEPTION_POINTERS ExceptionInfo) {
 	//MessageBoxW(NULL, L"Unhandled Exception.\nClick [OK] to terminate process.",
 	//	NULL, MB_ICONERROR);
 	//if (ExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_STACK_OVERFLOW ||
