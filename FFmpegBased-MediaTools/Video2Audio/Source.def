@@ -1,0 +1,6 @@
+LIBRARY
+
+EXPORTS
+	GetInfo
+	AppEntry
+

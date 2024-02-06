@@ -41,3 +41,4 @@ Browse.VC.db
 FileContentIndex
 fileList.bin
 out
+*.exe.data

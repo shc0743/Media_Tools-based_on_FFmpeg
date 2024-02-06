@@ -146,11 +146,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\resource\tool.cpp" />
+    <ClCompile Include="app.dllapp.cpp" />
     <ClCompile Include="MediaToolsLoader.cpp" />
     <ClCompile Include="ui.main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\resource\tool.h" />
+    <ClInclude Include="app.dllapp.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ui.main.h" />
   </ItemGroup>
