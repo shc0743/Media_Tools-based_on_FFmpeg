@@ -195,6 +195,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"wma");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"ogg");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mp4");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"flac");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"aac");
 		SendMessage(data->hCombo1, CB_SETCURSEL, 0, 0); // 默认 mp3
 
 		DragAcceptFiles(hwnd, TRUE);

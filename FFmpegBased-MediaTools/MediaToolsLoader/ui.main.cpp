@@ -22,6 +22,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 typedef struct {
 	HWND
 		hList1,
+		hBtnAbout,
+		hBtnDelete,
 		hBtnOpen,
 		hBtnQuit;
 	UINT bSafeMode;
@@ -192,7 +194,7 @@ int UiMain(CmdLineW& cl) {
 		wstring c = L"\"" + GetProgramDirW() + L"\" --type=ui --restart-by-"
 			"restart-manager --restart-count=" + to_wstring(rcc + 1);
 
-		auto result = RegisterApplicationRestart(c.c_str(), 0);
+		auto result = RegisterApplicationRestart(c.c_str(), RESTART_NO_CRASH);
 		if (S_OK != result) {
 			SetLastError(result);
 			// 支持失败
@@ -246,6 +248,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 #include "ctls.h"
 		dat->hList1 = custom(L"", WC_LISTVIEW, 0, 0, 1, 1,
 			LVS_SINGLESEL | LVS_REPORT | WS_BORDER);
+		dat->hBtnAbout = button(DoesUserUsesChinese() ?
+			L"关于 (&A)" : L"&About", IDNO);
+		dat->hBtnDelete = button(DoesUserUsesChinese() ?
+			L"删除 (&D)" : L"&Delete", IDABORT);
 		dat->hBtnOpen = button(DoesUserUsesChinese() ?
 			L"打开 (&O)" : L"&Open", IDOK);
 		dat->hBtnQuit = button(DoesUserUsesChinese() ?
@@ -464,6 +470,37 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			}
 			break;
 
+		case IDABORT:
+			if (code == BN_CLICKED) {
+				int nSel = ListView_GetSelectionMark(data->hList1);
+				if (nSel < 0) {
+					
+					break;
+				}
+				if (nSel < 2) {
+					MessageBoxW(hwnd, ErrorCodeToStringW(
+						ERROR_INVALID_SERVICE_CONTROL).c_str(), 0, MB_ICONERROR);
+					break;
+				}
+				wchar_t szFilename[2048]{};
+				ListView_GetItemText(data->hList1, nSel, 1, szFilename, 2048);
+				if (!szFilename[0]) {
+					MessageBoxW(hwnd, DoesUserUsesChinese() ? L"获取数据时出现错误" :
+						L"An error occurred during getting data", 0, MB_ICONERROR);
+					break;
+				}
+				if (IDYES != MessageBoxW(hwnd, DoesUserUsesChinese() ? L"确定删除此"
+					"工具?" : L"Are you sure you want to delete this tool?",
+					L"Question", MB_ICONQUESTION | MB_YESNO)) break;
+				SetCurrentDirectoryW(L"apps");
+				if (!DeleteFileW(szFilename)) {
+					MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
+				}
+				SetCurrentDirectoryW(L"..");
+				PostMessage(hwnd, WM_USER + 0xf1, 0, 0);
+			}
+			break;
+
 		default:
 			// 未知的控件ID，可以调用默认处理或什么都不做  
 			break;
@@ -524,6 +561,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 		SetWindowPos(data->hList1, 0, 10, 10, rc.right - rc.left - 20,
 			rc.bottom - rc.top - 60, SWP_NOACTIVATE);
+		SetWindowPos(data->hBtnAbout, 0, 10,
+			rc.bottom - rc.top - 40, 80, 30, SWP_NOACTIVATE);
+		SetWindowPos(data->hBtnDelete, 0, rc.right - rc.left - 270,
+			rc.bottom - rc.top - 40, 80, 30, SWP_NOACTIVATE);
 		SetWindowPos(data->hBtnOpen, 0, rc.right - rc.left - 180,
 			rc.bottom - rc.top - 40, 80, 30, SWP_NOACTIVATE);
 		SetWindowPos(data->hBtnQuit, 0, rc.right - rc.left - 90,
@@ -546,7 +587,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 
 static void AddTool(HWND hwnd, LPCWSTR lpTool) {
-	wstring newFileName = L"apps/" + GenerateUUIDW() + L".MTL.dll";
+	wstring tool = lpTool;
+	tool = tool.substr(tool.find_last_of(L"\\") + 1);
+	wstring newFileName = L"apps/" + tool;
+	if (!newFileName.ends_with(L".MTL.dll")) newFileName.append(L".MTL.dll");
 	CopyFileW(lpTool, newFileName.c_str(), FALSE);
 }
 
