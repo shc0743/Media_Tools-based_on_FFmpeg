@@ -99,7 +99,7 @@ DWORD download_main() {
    // MessageBoxW(0, L"1", 0, 0);
 
 	// 开始下载文件  
-	char buffer[4096]{};
+	char* buffer = new char[1 * 1024 * 1024];
 	DWORD bytesRead;
 	wstring sz;
 	__int64 totalBytesRead = 0; // 使用64位整数来存储总读取字节数，以支持大文件  
@@ -120,6 +120,7 @@ DWORD download_main() {
 	InternetCloseHandle(hRequest);
 	InternetCloseHandle(hInternet);
 	DeleteMprgObject(hObj);
+	delete[] buffer;
 
 	wstring nfn = (L"FFmpeg-" + to_wstring(time(0))) + L".7z";
 	MoveFileW(s2wc(fname), nfn.c_str());

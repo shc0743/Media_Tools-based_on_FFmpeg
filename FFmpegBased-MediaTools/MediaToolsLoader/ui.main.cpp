@@ -90,8 +90,8 @@ bool (*InitMprgComponent)();
 HMPRGOBJ(*CreateMprgObject)();
 HMPRGWIZ(*CreateMprgWizard)(HMPRGOBJ hObject, MPRG_CREATE_PARAMS, DWORD dwTimeout);
 PMPRG_WIZARD_DATA(*GetModifiableMprgWizardData)(HMPRGWIZ hWizard);
-bool (*SetMprgWizardValue)(HMPRGWIZ hWizard, size_t currentValue);
-bool (*SetMprgWizardText)(HMPRGWIZ hWizard, PCWSTR psz);
+bool (*SetMprgWizardValue)(HMPRGWIZ hWizard, size_t currentValue, bool bForcceUpdate);
+bool (*SetMprgWizardText)(HMPRGWIZ hWizard, PCWSTR psz, bool bForcceUpdate);
 DWORD(*DeleteMprgObject)(HMPRGOBJ hObject, bool bForceTerminateIfTimeout);
 bool (*OpenMprgWizard)(HMPRGWIZ hWizard, int nShow);
 HWND(*GetMprgHwnd)(HMPRGWIZ hWizard);
@@ -501,6 +501,16 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			}
 			break;
 
+		case IDNO:
+		{
+			srand((UINT)time(0));
+			wstring fn = L"about." + to_wstring(time(0)) + L"." + GenerateRandomString(16,
+				L"0123456789qwertyuiopasdfghjklzxcvbnm"s) + L".html";
+			FreeResFile(IDR_HTML_ABOUTPAGE, L"BIN", fn);
+			ShellExecuteW(hwnd, L"open", fn.c_str(), L"", NULL, SW_NORMAL);
+		}
+			break;
+
 		default:
 			// 未知的控件ID，可以调用默认处理或什么都不做  
 			break;
@@ -518,7 +528,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		if (!hWiz) return AssertEx(hWiz);
 		OpenMprgWizard(hWiz, SW_NORMAL);
 
-		SetMprgWizardText(hWiz, L"Processing...");
+		SetMprgWizardText(hWiz, L"Processing...", true);
 
 		HDROP hDrop = (HDROP)wp;
 		wchar_t szFilePath[2048]{};
@@ -536,9 +546,9 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			DragQueryFile(hDrop, i, szFilePath, 2048); // 获取文件路径  
 			wcsTemp = (L"[" + to_wstring(i) + L"/" + sfc
 				+ L"] Adding " + szFilePath);
-			SetMprgWizardText(hWiz, wcsTemp.c_str());
+			SetMprgWizardText(hWiz, wcsTemp.c_str(), false);
 			AddTool(hwnd, szFilePath);
-			SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1);
+			SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1, false);
 		}
 
 		// 释放拖放文件结构占用的内存  
@@ -602,7 +612,8 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 			L"An error occurred during getting data", 0, MB_ICONERROR);
 		return;
 	}
-	wstring filename = szFilename;
+	wstring filename = L"./";
+	filename.append(szFilename);
 	wstring szCmdLine = L"Loader --type=app --app-type=dll --app-entry= "
 		"--dll-host-type=default --dll-file=\"" + filename + L"\" --spawn"
 		"-process-id=" + to_wstring(GetCurrentProcessId()) + L" --spawn-"

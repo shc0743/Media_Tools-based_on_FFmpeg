@@ -1,6 +1,8 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "pch.h"
 #include "../../resource/tool.h"
+#include "../progress_wizard/wizard.user.h"
+#pragma comment(lib, "../progress_wizard/MyProgressWizardLib64.lib")
 #include <CommCtrl.h>
 
 HMODULE hInst;
@@ -56,8 +58,10 @@ typedef struct {
 	HWND hwndRoot;
 	HWND
 		hList1,
+		hText6, hCheck3, hCheck4,
+		hText2, hCombo2, hText3, hEdit2, hText4, hEdit3, hText5, hEdit4,
 		hText1, hEdit1, hCombo1,
-		hCheck1, hBtnRemove, hBtnOk, hBtnCancel;
+		hCheck1, hCheck2, hBtnRemove, hBtnOk, hBtnCancel;
 } WndData_MainWnd, * WndDataP_MainWnd;
 
 
@@ -118,9 +122,16 @@ int UiMain(CmdLineW& cl) {
 
 
 int __stdcall AppEntry(PCWSTR lpstrCmdLine) {
+	InitMprgComponent();
 	CmdLineW cl(lpstrCmdLine);
 	return UiMain(cl);
 }
+
+
+
+bool bProcessDoing = false;
+bool bProcessCancelled = false;
+HANDLE hProcessDuring;
 
 
 // 窗口过程函数  
@@ -145,17 +156,39 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		dat->hList1 = custom(L"", WC_LISTVIEW, 0, 0, 1, 1,
 			LVS_REPORT | WS_BORDER);
 		dat->hText1 = text(DoesUserUsesChinese() ?
-			L"输出文件夹 (&D):" : L"Output &directory:");
+			L"输出文件夹 (&D):" : L"Output &directory:", 0, 0, 1, 1, SS_CENTERIMAGE);
+		dat->hText6 = text(DoesUserUsesChinese() ?
+			L"音视频选项:" : L"Video&&Audio:", 0, 0, 1, 1, SS_CENTERIMAGE);
+		dat->hCheck3 = button(DoesUserUsesChinese() ?
+			L"关闭音频" : L"Disable audio", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
+		dat->hCheck4 = button(DoesUserUsesChinese() ?
+			L"关闭视频" : L"Disable video", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
+		dat->hText2 = text(DoesUserUsesChinese() ?
+			L"视频&编解码器:" : L"Video &Codec:", 0, 0, 1, 1, SS_CENTERIMAGE);
+		dat->hCombo2 = custom(L"", WC_COMBOBOXW, 0, 0, 1, 1, CBS_DROPDOWN);
+		dat->hText3 = text(DoesUserUsesChinese() ?
+			L"质量 (&U):" : L"Q&uality:", 0, 0, 1, 1, SS_CENTERIMAGE);
+		dat->hEdit2 = edit(L"", 0, 0, 1, 1, ES_NUMBER);
+		dat->hText4 = text(L"&FPS:", 0, 0, 1, 1, SS_CENTERIMAGE);
+		dat->hEdit3 = edit(L"", 0, 0, 1, 1, ES_NUMBER);
+		dat->hText5 = text(DoesUserUsesChinese() ?
+			L"&大小:" : L"&Size:", 0, 0, 1, 1, SS_CENTERIMAGE);
+		dat->hEdit4 = edit(L"0x0", 0, 0, 1, 1, ES_CENTER);
 		dat->hEdit1 = edit();
-		dat->hCombo1 = custom(L"mp3", WC_COMBOBOXW, 0, 0, 1, 1, CBS_DROPDOWN);
+		dat->hCombo1 = custom(L"", WC_COMBOBOXW, 0, 0, 1, 1, CBS_DROPDOWN);
 		dat->hCheck1 = button(DoesUserUsesChinese() ?
 			L"显示输出 (&O)" : L"Sh&ow output", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
+		dat->hCheck2 = button(DoesUserUsesChinese() ?
+			L"硬件加速 (&A)" : L"Hardware &accel", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
 		dat->hBtnRemove = button(DoesUserUsesChinese() ?
 			L"移除选中 (&R)" : L"&Remove", IDABORT);
 		dat->hBtnOk = button(DoesUserUsesChinese() ?
 			L"开始 (&S)" : L"&Start", IDOK);
 		dat->hBtnCancel = button(DoesUserUsesChinese() ?
 			L"退出 (&Q)" : L"&Quit", IDCANCEL);
+
+		SendMessageW(dat->hCheck2, BM_SETCHECK, BST_CHECKED, 0);
+		SendMessageW(dat->hEdit2, WM_SETTEXT, 0, (LONG_PTR)L"18");
 
 		PostMessage(hwnd, WM_USER + 0xf0, 0, 0);
 
@@ -198,7 +231,14 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mkv");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mpg");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"ogg");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"ts");
 		SendMessage(data->hCombo1, CB_SETCURSEL, 0, 0); // 默认 mp4
+
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"hevc");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"h264");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"av1");
+		SendMessage(data->hCombo2, CB_SETCURSEL, 0, 0); // 默认 保持原样
 
 		DragAcceptFiles(hwnd, TRUE);
 
@@ -261,21 +301,41 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			if (!CloseHandleIfOk(CreateThread(0, 0, [](PVOID pdata)->DWORD {
 				WndDataP_MainWnd data = (WndDataP_MainWnd)pdata;
 				HWND hwnd = data->hwndRoot;
+				bProcessCancelled = false;
+				bProcessDoing = true;
+
+				HMPRGOBJ hObj = CreateMprgObject();
+				HMPRGWIZ hWiz = CreateMprgWizard(hObj, MPRG_CREATE_PARAMS{
+					.max = (size_t)ListView_GetItemCount(data->hList1),
+				});
+				OpenMprgWizard(hWiz);
 
 				wchar_t buffer[2048]{}, processing[] = L"Processing", done[] = L"Done";
-				wchar_t extName[16]{}, outdir[2048]{};
+				wchar_t 
+					extName[16]{},
+					outdir[2048]{},
+					codec[16]{},
+					quality[16]{},
+					fps[16]{},
+					size[32]{};
 				SendMessageW(data->hCombo1, WM_GETTEXT, 16, (LPARAM)&extName);
 				SendMessageW(data->hEdit1, WM_GETTEXT, 2048, (LPARAM)&outdir);
+				SendMessageW(data->hCombo2, WM_GETTEXT, 16, (LPARAM)&codec);
+				SendMessageW(data->hEdit2, WM_GETTEXT, 16, (LPARAM)&quality);
+				SendMessageW(data->hEdit3, WM_GETTEXT, 16, (LPARAM)&fps);
+				SendMessageW(data->hEdit4, WM_GETTEXT, 32, (LPARAM)&size);
 				if (!extName[0] || !outdir[0]) {
 					MessageBoxW(hwnd, (DoesUserUsesChinese() ?
 						(extName[0] ? L"未填写输出文件夹!" : L"未填写扩展名!") :
 						(extName[0] ? L"Please input output directory!" :
 							L"Please input extname!")), 0, MB_ICONERROR);
+					DeleteMprgObject(hObj);
 					HWND hw = 0;
 					while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 						EnableWindow(hw, true);
 					}
 					DragAcceptFiles(hwnd, true);
+					bProcessDoing = false;
 					return 87;
 				}
 				wstring cl, wtmp;
@@ -292,26 +352,63 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					EnableMenuItem(hMenu, SC_CLOSE, MF_GRAYED | MF_DISABLED);
 					si.wShowWindow = SW_NORMAL;
 				}
+				bool noAudio = BST_CHECKED &
+					SendMessage(data->hCheck3, BM_GETSTATE, 0, 0);
+				bool noVideo = BST_CHECKED &
+					SendMessage(data->hCheck4, BM_GETSTATE, 0, 0);
+				vector<wstring> params;
+				SetMprgWizAttribute(hWiz, MPRG_WIZARD_EXTENSIBLE_ATTRIBUTES::
+					WizAttrCancelHandler, (LONG_PTR)(void*)(bool(*)())([] {
+						bProcessCancelled = true;
+						if (hProcessDuring)
+							TerminateProcess(hProcessDuring, ERROR_CANCELLED);
+						return true;
+					}));
 				for (int i = 0, l = ListView_GetItemCount(data->hList1); i < l; ++i) {
 					ListView_SetItemText(data->hList1, i, 1, processing);
 					ListView_GetItemText(data->hList1, i, 0, buffer, 2048);
 
-					cl = L"FFmpeg -i \""s + buffer + L"\" -vn -y \"";
+					cl = L"FFmpeg ";
+					if (BST_CHECKED & SendMessage(data->hCheck2, BM_GETSTATE, 0, 0))
+						cl.append(L"-hwaccel auto ");
+					cl += L"-i \""s + buffer + L"\" -y ";
+
+					params.clear();
+					if (noVideo) params.push_back(L"-vn");
+					if (noAudio) params.push_back(L"-an");
+					if (noVideo && noAudio) {
+						MessageBoxW(hwnd, DoesUserUsesChinese() ?
+							L"检测到选项冲突：\n- 不能同时禁用音频和视频。" :
+							L"Conflict detected:\n- Cannot disable "
+							"both video and audio.", 0, MB_ICONERROR);
+						break;
+					}
+					if (codec[0]) params.push_back(L"-vcodec \""s + codec + L"\"");
+					if (quality[0]) params.push_back(L"-crf \""s + quality + L"\"");
+					if (fps[0]) params.push_back(L"-r \""s + fps + L"\"");
+					if (size[0] && _wcsicmp(size, L"0x0"))
+						params.push_back(L"-s \""s + size + L"\"");
+
+					for (auto& i : params) {
+						cl.append(i); cl.append(L" ");
+					}
 
 					wtmp = buffer;
 					wtmp = wtmp.substr(wtmp.find_last_of(L"\\") + 1);
 					size_t extStart = wtmp.find_last_of(L".");
 					if (extStart) {
 						wtmp.erase(extStart);
+						wtmp += L"-PROCESSED";
 						wtmp += L".";
 						wtmp += extName;
 					}
-					cl += outdir;
+					cl += L"\""; cl += outdir;
 					if (!cl.ends_with(L"\\")) cl += L"\\";
 					cl += wtmp;
 					cl += L"\"";
 
 					wcscpy_s(buffer, cl.c_str());
+					SetMprgWizardText(hWiz, cl.c_str());
 					if (bShowConsole) {
 						DWORD n = 0;
 						WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
@@ -341,17 +438,21 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 						}
 						else
 							MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
+						DeleteMprgObject(hObj);
 						HWND hw = 0;
 						while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 							EnableWindow(hw, true);
 						}
 						DragAcceptFiles(hwnd, true);
+						bProcessDoing = false;
 						return -1;
 					}
 					DWORD code = -1;
+					hProcessDuring = pi.hProcess;
 					WaitForSingleObject(pi.hProcess, INFINITE);
 					GetExitCodeProcess(pi.hProcess, &code);
 					CloseHandle(pi.hThread);
+					hProcessDuring = NULL;
 					CloseHandle(pi.hProcess);
 					if (code != 0) {
 						cl = L"Failed - error code " + to_wstring(code);
@@ -362,6 +463,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					else {
 						ListView_SetItemText(data->hList1, i, 1, done);
 					}
+					SetMprgWizardValue(hWiz, size_t(i) + 1);
+					if (bProcessCancelled) break;
 				}
 
 				if (bShowConsole) {
@@ -375,13 +478,15 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 					PostMessage(hw, WM_CLOSE, 0, 0);
 				}
+				DeleteMprgObject(hObj);
 				HWND hw = 0;
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 					EnableWindow(hw, true);
 				}
 				DragAcceptFiles(hwnd, true);
+				bProcessDoing = false;
 				return 0;
-				}, data, 0, 0))) {
+			}, data, 0, 0))) {
 				MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
 				HWND hw = 0;
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
@@ -446,14 +551,38 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		static RECT rc{}; GetClientRect(hwnd, &rc);
 
 		SetWindowPos(data->hList1, 0, 10, 10, rc.right - rc.left - 20,
-			rc.bottom - rc.top - 90, SWP_NOACTIVATE);
+			rc.bottom - rc.top - 150, SWP_NOACTIVATE);
+		SetWindowPos(data->hText6, 0, 10,
+			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hCheck3, 0, 120,
+			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hCheck4, 0, 240,
+			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hText2, 0, 10,
+			rc.bottom - rc.top - 105, 110, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hCombo2, 0, 130,
+			rc.bottom - rc.top - 105, 100, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hText3, 0, 240,
+			rc.bottom - rc.top - 105, 80, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hEdit2, 0, 320,
+			rc.bottom - rc.top - 105, 40, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hText4, 0, 370,
+			rc.bottom - rc.top - 105, 40, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hEdit3, 0, 410,
+			rc.bottom - rc.top - 105, 40, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hText5, 0, 460,
+			rc.bottom - rc.top - 105, 40, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hEdit4, 0, 500,
+			rc.bottom - rc.top - 105, rc.right - rc.left - 510, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hText1, 0, 10,
-			rc.bottom - rc.top - 70, 120, 25, SWP_NOACTIVATE);
+			rc.bottom - rc.top - 75, 120, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hEdit1, 0, 140,
-			rc.bottom - rc.top - 70, rc.right - rc.left - 260, 25, SWP_NOACTIVATE);
+			rc.bottom - rc.top - 75, rc.right - rc.left - 260, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hCombo1, 0, rc.right - rc.left - 110,
-			rc.bottom - rc.top - 70, 100, 25, SWP_NOACTIVATE);
+			rc.bottom - rc.top - 75, 100, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hCheck1, 0, 10,
+			rc.bottom - rc.top - 40, 120, 30, SWP_NOACTIVATE);
+		SetWindowPos(data->hCheck2, 0, 140,
 			rc.bottom - rc.top - 40, 120, 30, SWP_NOACTIVATE);
 		SetWindowPos(data->hBtnRemove, 0, rc.right - rc.left - 320,
 			rc.bottom - rc.top - 40, 130, 30, SWP_NOACTIVATE);
@@ -464,6 +593,11 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 	}
 	break;
+
+	case WM_CLOSE:
+		if (bProcessDoing) break;
+		DestroyWindow(hwnd);
+		break;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
