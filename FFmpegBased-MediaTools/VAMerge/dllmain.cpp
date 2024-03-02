@@ -145,7 +145,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		dat->hList1 = custom(L"", WC_LISTVIEW, 0, 0, 1, 1,
 			LVS_REPORT | WS_BORDER);
 		dat->hText1 = text(DoesUserUsesChinese() ?
-			L"输出文件夹 (&D):" : L"Output &directory:");
+			L"输出文件名 (&D):" : L"Output &file:");
 		dat->hEdit1 = edit();
 		dat->hCombo1 = custom(L"mp3", WC_COMBOBOXW, 0, 0, 1, 1, CBS_DROPDOWN);
 		dat->hCheck1 = button(DoesUserUsesChinese() ?
@@ -286,111 +286,76 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				si.cb = sizeof(si);
 				si.wShowWindow = SW_HIDE;
 				si.dwFlags = STARTF_USESHOWWINDOW;
-				bool bShowConsole = false;
-				if (bShowConsole) {
-					AllocConsole();
-					HWND hw = GetConsoleWindow();
-					HMENU hMenu = GetSystemMenu(hw, false);
-					EnableMenuItem(hMenu, SC_CLOSE, MF_GRAYED | MF_DISABLED);
-					si.wShowWindow = SW_NORMAL;
-				}
+				vector<wstring> inputs;
 				for (int i = 0, l = ListView_GetItemCount(data->hList1); i < l; ++i) {
-					ListView_SetItemText(data->hList1, i, 1, processing);
+					//ListView_SetItemText(data->hList1, i, 1, processing);
 					ListView_GetItemText(data->hList1, i, 0, buffer, 2048);
 
-					cl = L"FFmpeg -i \""s + buffer + L"\"";
-					if (BST_CHECKED &
-						SendMessage(data->hCheck1, BM_GETSTATE, 0, 0))
-					{
-						cl += L" -c:v copy -c:a copy";
-					}
-					cl += L" -y \"";
+					inputs.push_back(buffer);
+				}
+				cl = L"FFmpeg ";
+				for (auto& i : inputs) {
+					wstring s = L"-i \"" + i + L"\" ";
+					cl += s;
+				}
+				if (BST_CHECKED &
+					SendMessage(data->hCheck1, BM_GETSTATE, 0, 0))
+				{
+					cl += L" -c:v copy -c:a copy";
+				}
+				cl += L" -y \"";
+				cl += outdir;
+				cl += L".";
+				cl += extName;
+				cl += L"\"";
 
-					wtmp = buffer;
-					wtmp = wtmp.substr(wtmp.find_last_of(L"\\") + 1);
-					size_t extStart = wtmp.find_last_of(L".");
-					if (extStart) {
-						wtmp.erase(extStart);
-						wtmp += L"-MERGE.";
-						wtmp += extName;
+				wcscpy_s(buffer, cl.c_str());
+				if (!CreateProcessW(NULL, buffer, 0, 0, 0,
+					HIGH_PRIORITY_CLASS, 0, 0, &si, &pi)) {
+					if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+						MessageBoxW(hwnd, DoesUserUsesChinese() ?
+							L"找不到 ffmpeg 文件。请尝试：\n"
+							L"- 去 https://ffmpeg.org/ 下载 FFmpeg\n"
+							L"- 将ffmpeg.exe放在本程序目录下\n"
+							L"- 或将ffmpeg.exe放入系统PATH\n" :
+							L"Sorry but we cannot find FFmpeg executable file."
+							" Please try to:\n"
+							L"- Download FFmpeg on https://ffmpeg.org/\n"
+							L"- Put ffmpeg.exe in this program's folder\n"
+							L"- or put ffmpeg.exe into PATH\n", 0, MB_ICONHAND);
 					}
-					cl += outdir;
-					if (!cl.ends_with(L"\\")) cl += L"\\";
-					cl += wtmp;
-					cl += L"\"";
-
-					wcscpy_s(buffer, cl.c_str());
-					if (bShowConsole) {
-						DWORD n = 0;
-						WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
-							L"\n> ", 2, &n, 0);
-						WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
-							buffer, (DWORD)wcslen(buffer), &n, 0);
-						WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
-							L"\n", 1, &n, 0);
+					else
+						MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
+					HWND hw = 0;
+					while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
+						EnableWindow(hw, true);
 					}
-					if (!CreateProcessW(NULL, buffer, 0, 0, 0,
-						HIGH_PRIORITY_CLASS, 0, 0, &si, &pi)) {
-						if (bShowConsole) {
-							GetSystemMenu(GetConsoleWindow(), true);
-							FreeConsole();
-						}
-						if (GetLastError() == ERROR_FILE_NOT_FOUND) {
-							MessageBoxW(hwnd, DoesUserUsesChinese() ?
-								L"找不到 ffmpeg 文件。请尝试：\n"
-								L"- 去 https://ffmpeg.org/ 下载 FFmpeg\n"
-								L"- 将ffmpeg.exe放在本程序目录下\n"
-								L"- 或将ffmpeg.exe放入系统PATH\n" :
-								L"Sorry but we cannot find FFmpeg executable file."
-								" Please try to:\n"
-								L"- Download FFmpeg on https://ffmpeg.org/\n"
-								L"- Put ffmpeg.exe in this program's folder\n"
-								L"- or put ffmpeg.exe into PATH\n", 0, MB_ICONHAND);
-						}
-						else
-							MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
-						HWND hw = 0;
-						while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
-							EnableWindow(hw, true);
-						}
-						DragAcceptFiles(hwnd, true);
-						return -1;
-					}
-					DWORD code = -1;
-					WaitForSingleObject(pi.hProcess, INFINITE);
-					GetExitCodeProcess(pi.hProcess, &code);
-					CloseHandle(pi.hThread);
-					CloseHandle(pi.hProcess);
-					if (code != 0) {
-						cl = L"Failed - error code " + to_wstring(code);
-						wchar_t szBuffer[256]{};
-						wcscpy_s(szBuffer, cl.c_str());
-						ListView_SetItemText(data->hList1, i, 1, szBuffer);
-					}
-					else {
-						ListView_SetItemText(data->hList1, i, 1, done);
-					}
+					DragAcceptFiles(hwnd, true);
+					return -1;
+				}
+				DWORD code = -1;
+				WaitForSingleObject(pi.hProcess, INFINITE);
+				GetExitCodeProcess(pi.hProcess, &code);
+				CloseHandle(pi.hThread);
+				CloseHandle(pi.hProcess);
+				if (code != 0) {
+					cl = L"Failed - error code " + to_wstring(code);
+					wchar_t szBuffer[256]{};
+					wcscpy_s(szBuffer, cl.c_str());
+					MessageBoxW(hwnd, szBuffer, 0, MB_ICONERROR);
+				}
+				else {
+					MessageBoxW(hwnd, ErrorCodeToStringW(0).c_str(),
+						L"Success", MB_ICONINFORMATION);
 				}
 
-				if (bShowConsole) {
-					DWORD n = 0;
-					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), L"\n\nPress "
-						"any key to continue...", 30, &n, 0);
-					(void)_getch();
-					HWND hw = GetConsoleWindow();
-					GetSystemMenu(hw, true);
-					FreeConsole();
-
-					PostMessage(hw, WM_CLOSE, 0, 0);
-				}
 				HWND hw = 0;
 				while ((hw = FindWindowExW(hwnd, hw, 0, 0))) {
 					EnableWindow(hw, true);
 				}
 				DragAcceptFiles(hwnd, true);
-				MessageBoxW(hwnd, ErrorCodeToStringW(0).c_str(),
-					L"Success", MB_ICONINFORMATION);
 				ListView_DeleteAllItems(data->hList1);
+				SetWindowTextW(data->hEdit1, L"");
 				return 0;
 				}, data, 0, 0))) {
 				MessageBoxW(hwnd, LastErrorStrW().c_str(), 0, MB_ICONERROR);
@@ -417,7 +382,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		wchar_t szFilePath[2048]{};
 		int fileCount = DragQueryFile(hDrop, (UINT)-1, NULL, 0); // 获取拖放文件的数量  
 
-		wchar_t wcsOutFolder[5]{}; // 检测“输出文件夹”是否填写
+		wchar_t wcsOutFolder[5]{}; // 检测“输出文件”是否填写
 		GetWindowTextW(data->hEdit1, wcsOutFolder, 5);
 
 		LVITEM lvI{};
@@ -433,9 +398,15 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			DragQueryFile(hDrop, i, szFilePath, 2048); // 获取文件路径
 
 			if (wcsOutFolder[0] == 0 && i == 0) {
-				wstring wcs = szFilePath;
-				wcs.erase(wcs.find_last_of(L"\\"));
-				SetWindowTextW(data->hEdit1, wcs.c_str());
+				wstring wtmp = szFilePath;
+				size_t extStart = wtmp.find_last_of(L".");
+				if (extStart) {
+					wtmp.erase(extStart);
+				}
+				wtmp += L".MERGE";
+				wstring cl = wtmp;
+
+				SetWindowTextW(data->hEdit1, cl.c_str());
 			}
 
 			lvI.iItem = i;
