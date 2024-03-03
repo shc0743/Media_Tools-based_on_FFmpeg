@@ -315,12 +315,12 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					if (GetLastError() == ERROR_FILE_NOT_FOUND) {
 						MessageBoxW(hwnd, DoesUserUsesChinese() ?
 							L"找不到 ffmpeg 文件。请尝试：\n"
-							L"- 去 https://ffmpeg.org/ 下载 FFmpeg\n"
+							L"- 下载 FFmpeg\n"
 							L"- 将ffmpeg.exe放在本程序目录下\n"
 							L"- 或将ffmpeg.exe放入系统PATH\n" :
 							L"Sorry but we cannot find FFmpeg executable file."
 							" Please try to:\n"
-							L"- Download FFmpeg on https://ffmpeg.org/\n"
+							L"- Download FFmpeg\n"
 							L"- Put ffmpeg.exe in this program's folder\n"
 							L"- or put ffmpeg.exe into PATH\n", 0, MB_ICONHAND);
 					}

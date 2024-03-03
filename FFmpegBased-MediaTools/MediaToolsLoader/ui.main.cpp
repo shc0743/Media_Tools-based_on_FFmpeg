@@ -97,7 +97,7 @@ bool (*OpenMprgWizard)(HMPRGWIZ hWizard, int nShow);
 HWND(*GetMprgHwnd)(HMPRGWIZ hWizard);
 bool (*UpdateMprgWizard)(HMPRGWIZ hWizard);
 bool initProgDll() {
-	constexpr auto file = L"MTLProgressUiPlugin.dll";
+	constexpr auto file = L"MTLPUPv2.dll";
 	if (!FreeResFile(IDR_BIN_PROGRESS_PLUGIN, L"BIN", file)) // œ»≥¢ ‘∏≤∏«
 		if (!file_exists(file)) return false; // ∏≤∏« ß∞‹
 	HMODULE h = LoadLibraryW(file);
@@ -614,7 +614,7 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 	}
 	wstring filename = L"./";
 	filename.append(szFilename);
-	wstring szCmdLine = L"Loader --type=app --app-type=dll --app-entry= "
+	wstring szCmdLine = L"Loader --type=app --app-type=dll --app-entry=\"\" "
 		"--dll-host-type=default --dll-file=\"" + filename + L"\" --spawn"
 		"-process-id=" + to_wstring(GetCurrentProcessId()) + L" --spawn-"
 		"window=" + to_wstring((LONG_PTR)hwnd);
