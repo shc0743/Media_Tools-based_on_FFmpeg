@@ -188,7 +188,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			L"退出 (&Q)" : L"&Quit", IDCANCEL);
 
 		SendMessageW(dat->hCheck2, BM_SETCHECK, BST_CHECKED, 0);
-		SendMessageW(dat->hEdit2, WM_SETTEXT, 0, (LONG_PTR)L"18");
+		SendMessageW(dat->hEdit2, WM_SETTEXT, 0, (LONG_PTR)L""); 
 
 		PostMessage(hwnd, WM_USER + 0xf0, 0, 0);
 
@@ -238,6 +238,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"hevc");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"h264");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"av1");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"copy");
 		SendMessage(data->hCombo2, CB_SETCURSEL, 0, 0); // 默认 保持原样
 
 		DragAcceptFiles(hwnd, TRUE);

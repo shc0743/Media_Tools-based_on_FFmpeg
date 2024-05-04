@@ -206,6 +206,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"hevc");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"h264");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"av1");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"copy");
 		SendMessage(data->hCombo1, CB_SETCURSEL, 0, 0); // 默认 hevc
 
 		DragAcceptFiles(hwnd, TRUE);
