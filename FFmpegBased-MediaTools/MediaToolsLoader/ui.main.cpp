@@ -191,7 +191,9 @@ int UiMain(CmdLineW& cl) {
 		wstring rc; cl.getopt(L"restart-count", rc);
 		size_t rcc = 0;
 		if (!rc.empty()) rcc = atoll(ws2c(rc));
-		wstring c = L"\"" + GetProgramDirW() + L"\" --type=ui --restart-by-"
+		//wstring c = L"\"" + GetProgramDirW() + L"\" --type=ui --restart-by-"
+		//	"restart-manager --restart-count=" + to_wstring(rcc + 1);
+		wstring c = L"--type=ui --restart-by-" // 不需要程序目录，系统会自动填写
 			"restart-manager --restart-count=" + to_wstring(rcc + 1);
 
 		auto result = RegisterApplicationRestart(c.c_str(), RESTART_NO_CRASH);
@@ -432,7 +434,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				if (nSel == 1) {
 					WCHAR cd[1024]{}; GetCurrentDirectoryW(1024, cd);
 
-					OPENFILENAME ofn{};       // common dialog box structure
+					OPENFILENAMEW ofn{};       // common dialog box structure
 					wchar_t szFile[260]{};       // buffer for file name
 
 					ofn.lStructSize = sizeof(ofn);
@@ -446,9 +448,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					ofn.lpstrFileTitle = NULL;
 					ofn.nMaxFileTitle = 0;
 					ofn.lpstrInitialDir = NULL;
-					ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+					ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST |
+						OFN_ALLOWMULTISELECT | OFN_EXPLORER;
 
-					if (GetOpenFileName(&ofn) == TRUE) {
+					if (GetOpenFileNameW(&ofn) == TRUE) {
 						/*	hf = CreateFile(ofn.lpstrFile,
 								GENERIC_READ,
 								0,
@@ -457,10 +460,62 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 								FILE_ATTRIBUTE_NORMAL,
 								(HANDLE)NULL);*/
 						SetCurrentDirectoryW(cd);
-						AddTool(hwnd, ofn.lpstrFile);
+
+						HMPRGOBJ hObj = CreateMprgObject();
+						HMPRGWIZ hWiz = CreateMprgWizard(hObj, MPRG_CREATE_PARAMS{
+							.szTitle = L"Add tool(s)",
+							.max = size_t(-1) }, 30000);
+						if (!hWiz) return AssertEx(hWiz);
+						OpenMprgWizard(hWiz, SW_NORMAL);
+
+						SetMprgWizardText(hWiz, L"Processing...", true);
+
+						vector<wstring> files;
+						const wchar_t* pstr = ofn.lpstrFile;
+						wstring folder = pstr;
+						pstr += ofn.nFileOffset;
+						//if (IsDebuggerPresent()) DebugBreak(); // for debug
+						while (pstr[0]) {
+							files.push_back(folder + L"\\" + pstr);
+							pstr += wcslen(pstr);
+							pstr += 1;
+						}
+						size_t fileCount = files.size();
+
+						auto pd = GetModifiableMprgWizardData(hWiz);
+						pd->max = fileCount;
+						UpdateMprgWizard(hWiz);
+
+						wstring sfc = to_wstring(fileCount), wcsTemp;
+						EnableWindow(hwnd, FALSE);
+
+						// 遍历所有文件  
+						for (int i = 0; i < fileCount; ++i) {
+							wstring& szFilePath = files[i];
+							wcsTemp = (L"[" + to_wstring(i) + L"/" + sfc
+								+ L"] Adding " + szFilePath);
+							SetMprgWizardText(hWiz, wcsTemp.c_str(), true);
+							AddTool(hwnd, szFilePath.c_str());
+							SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1, true);
+						}
+
 						PostMessage(hwnd, WM_USER + 0xf1, 0, 0);
+						EnableWindow(hwnd, TRUE);
+						MessageBoxTimeoutW(GetMprgHwnd(hWiz), DoesUserUsesChinese() ?
+							(L"成功添加了 " + sfc + L" 个工具。").c_str() :
+							(L"Successfully added " + sfc + L" tools.").c_str(),
+							L"Success", MB_ICONINFORMATION, 0, 5000);
+						DeleteMprgObject(hObj, true);
+						//SetCurrentDirectoryW(cd);
+						//AddTool(hwnd, ofn.lpstrFile);
+						//PostMessage(hwnd, WM_USER + 0xf1, 0, 0);
 					}
+
+					// 重设当前目录
 					SetCurrentDirectoryW(cd);
+					//SetCurrentDirectoryW((GetProgramPathW() + 
+					//	s2ws(GetProgramInfo().name + ".data")).c_str());
+
 					break;
 				}
 
@@ -546,9 +601,9 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 			DragQueryFile(hDrop, i, szFilePath, 2048); // 获取文件路径  
 			wcsTemp = (L"[" + to_wstring(i) + L"/" + sfc
 				+ L"] Adding " + szFilePath);
-			SetMprgWizardText(hWiz, wcsTemp.c_str(), false);
+			SetMprgWizardText(hWiz, wcsTemp.c_str(), true);
 			AddTool(hwnd, szFilePath);
-			SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1, false);
+			SetMprgWizardValue(hWiz, static_cast<size_t>(i) + 1, true);
 		}
 
 		// 释放拖放文件结构占用的内存  
@@ -559,7 +614,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		MessageBoxTimeoutW(GetMprgHwnd(hWiz), DoesUserUsesChinese() ?
 			(L"成功添加了 " + sfc + L" 个工具。").c_str() :
 			(L"Successfully added " + sfc + L" tools.").c_str(),
-			L"Success", MB_ICONINFORMATION, 0, 1000);
+			L"Success", MB_ICONINFORMATION, 0, 5000);
 		DeleteMprgObject(hObj, true);
 	}
 		break;

@@ -301,7 +301,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				if (BST_CHECKED &
 					SendMessage(data->hCheck1, BM_GETSTATE, 0, 0))
 				{
-					cl += L" -c:v copy -c:a copy";
+					//cl += L" -c:v copy -c:a copy";
+					cl += L" -c copy"; // 新写法
 				}
 				cl += L" -y \"";
 				cl += outdir;
