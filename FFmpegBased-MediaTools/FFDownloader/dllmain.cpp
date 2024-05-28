@@ -217,6 +217,7 @@ DWORD download_main(wstring url, wstring filename, wstring ua, bool slient) {
 	char* buffer = new char[buffer_size];
 	DWORD bytesRead = 0, bytesWrite = 0;
 	wstring sz;
+	wchar_t* ccsz = new wchar_t[8192];
 	__int64 totalBytesRead = 0; // 使用64位整数来存储总读取字节数，以支持大文件  
 	while (InternetReadFile(hRequest, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0) {
 		WriteFile(ggfile, buffer, bytesRead, &bytesWrite, NULL);
@@ -225,10 +226,11 @@ DWORD download_main(wstring url, wstring filename, wstring ua, bool slient) {
 		// 在这里更新下载进度  
 		int percentage = static_cast<int>((totalBytesRead * 100.0) / dwFileSize);
 		//std::cout << "Download progress: " << percentage << "%" << std::endl;
-		SetMprgWizardValue(hWiz, totalBytesRead);
+		SetMprgWizardValue(hWiz, totalBytesRead, false);
 		sz = L"Downloading... " + to_wstring(totalBytesRead) + L"/" +
 			to_wstring(dwFileSize) + L" bytes (" + to_wstring(percentage) + L"%)";
-		SetMprgWizardText(hWiz, sz.c_str());
+		wcscpy_s(ccsz, 8192, sz.c_str());
+		SetMprgWizardText(hWiz, ccsz, false);
 	}
 
 	// 关闭文件和连接  
@@ -237,6 +239,7 @@ DWORD download_main(wstring url, wstring filename, wstring ua, bool slient) {
 	InternetCloseHandle(hInternet);
 	DeleteMprgObject(hObj);
 	delete[] buffer;
+	delete[] ccsz;
 
 	return 0;
 }
@@ -247,10 +250,32 @@ void CALLBACK InternetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
 }
 
 
+#include <commdlg.h>
 int __stdcall AppEntry(PCWSTR lpstrCmdLine) {
 	CmdLineW cl(lpstrCmdLine);
 	InitMprgComponent();
-	wstring nfn = (L"FFmpeg-" + to_wstring(time(0))) + L".7z";
+
+	// Initialize the OPENFILENAME members.  
+
+	wchar_t szFile[1024] = L"FFmpeg-Release-Full.7z";
+	OPENFILENAMEW Ofn{};
+	Ofn.lStructSize = sizeof(OPENFILENAME);
+	Ofn.hwndOwner = NULL;
+	Ofn.lpstrFilter = L"7-Zip Compressed File\0.7z\0";
+	Ofn.lpstrFile = szFile;
+	Ofn.nMaxFile = 1024;
+	Ofn.Flags = OFN_SHOWHELP | OFN_EXPLORER;
+	Ofn.lpstrTitle = L"Where do you want to save the FFmpeg?";
+
+	// Display the Filename common dialog box. The  
+	// filename specified by the user is passed  
+	// to the CreateEnhMetaFile function and used to  
+	// store the metafile on disk.  
+	
+	if (!GetSaveFileNameW(&Ofn)) return GetLastError();
+
+	wstring nfn = szFile;
+	if (nfn.empty()) return ERROR_CANCELLED;
 	return (int)download_main(L"https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z", nfn, 
 		L"Windows (c) WinINet Platform Downloader", false);
 }
