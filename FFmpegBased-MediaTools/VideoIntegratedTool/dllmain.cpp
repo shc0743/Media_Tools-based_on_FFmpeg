@@ -245,6 +245,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"hevc");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"h264");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"hevc_nvenc");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"hevc_qsv");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"hevc_amf");
+		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"libsvtav1");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"av1");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"copy");
 		SendMessage(data->hCombo2, CB_SETCURSEL, 0, 0); // 默认 默认
