@@ -213,6 +213,9 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 				SetThreadExecutionState(ES_DISPLAY_REQUIRED);
 				SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED);
 			}
+			else {
+				SetThreadExecutionState(ES_CONTINUOUS);
+			}
 			break;
 
 		default:
@@ -342,6 +345,9 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					.max = (size_t)ListView_GetItemCount(data->hList1),
 				});
 				OpenMprgWizard(hWiz);
+
+				SetThreadDescription(GetCurrentThread(), L"Video integrated "
+					"tool - Video processor (FFmpeg manager) thread");
 
 				wchar_t buffer[2048]{}, processing[] = L"Processing", done[] = L"Done";
 				wchar_t 
