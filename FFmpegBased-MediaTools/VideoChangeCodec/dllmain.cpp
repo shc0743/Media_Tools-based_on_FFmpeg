@@ -32,7 +32,7 @@ MTL_dllinfo info;
 MTL_dllinfo __stdcall GetInfo() {
     info.cb = sizeof(info);
     wcscpy_s(info.szAppName, DoesUserUsesChinese() ?
-		L"更改视频编码器" : L"Change video codec");
+		L"更改视频编码器 (弃用)" : L"Change video codec (deprecated)");
 	//CreateThread(0, 0, 0, 0, 0, 0);//Testesteest
     return info;
 }
@@ -123,6 +123,17 @@ int UiMain(CmdLineW& cl) {
 
 int __stdcall AppEntry(PCWSTR lpstrCmdLine) {
 	CmdLineW cl(lpstrCmdLine);
+	if (!cl.getopt(L"ignore-deprecated-warnings"))
+		if (IDOK != MessageBoxW(NULL, DoesUserUsesChinese() ?
+			L"注意: VideoChangeCodec 已被弃用，并将于不久后的发行版本中被移除。\n"
+			L"我们建议您转至VideoIntegratedTool工具并使用其中的“视频编解码器”选项"
+			L"以实现同样的效果。\n\n继续使用吗？" :
+			L"Attention: VideoChangeCodex has been deprecated and will be "
+			L"removed in a soon to be released version.\nWe suggest to turn "
+			L"to the \"VideoIntegratedTool\" tool and use its Video Codec "
+			L"option to achieve the same effect.\nContinue using VideoChangeCodec?",
+			L"VideoChangeCodec",
+			MB_OKCANCEL | MB_ICONWARNING)) return ERROR_DS_NOT_SUPPORTED;
     return UiMain(cl);
 }
 

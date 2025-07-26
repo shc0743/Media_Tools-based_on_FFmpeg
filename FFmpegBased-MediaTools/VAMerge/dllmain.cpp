@@ -437,7 +437,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SetWindowPos(data->hCombo1, 0, rc.right - rc.left - 110,
 			rc.bottom - rc.top - 70, 100, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hCheck1, 0, 10,
-			rc.bottom - rc.top - 40, 120, 30, SWP_NOACTIVATE);
+			rc.bottom - rc.top - 40, 140, 30, SWP_NOACTIVATE);
 		SetWindowPos(data->hBtnRemove, 0, rc.right - rc.left - 320,
 			rc.bottom - rc.top - 40, 130, 30, SWP_NOACTIVATE);
 		SetWindowPos(data->hBtnOk, 0, rc.right - rc.left - 180,

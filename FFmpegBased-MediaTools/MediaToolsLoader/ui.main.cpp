@@ -717,7 +717,7 @@ void LaunchAppInstance(HWND hwnd, WndDataP_MainWnd data, int nSel) {
 
 		if (dwExitCode != 0) {
 			MessageBoxW(t->hwnd, ErrorCodeToStringW(dwExitCode).c_str(),
-				0, MB_ICONERROR);
+				(L"Error Code: " + to_wstring(dwExitCode)).c_str() , MB_ICONERROR);
 		}
 		free(t);
 		return dwExitCode;

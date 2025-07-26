@@ -58,7 +58,7 @@ typedef struct {
 	HWND hwndRoot;
 	HWND
 		hList1,
-		hText6, hCheck3, hCheck4,
+		hText6, hCheck3, hCheck4, hCheck5, hCheck6,
 		hText2, hCombo2, hText3, hEdit2, hText4, hEdit3, hText5, hEdit4,
 		hText1, hEdit1, hCombo1,
 		hCheck1, hCheck2, hBtnRemove, hBtnOk, hBtnCancel;
@@ -158,11 +158,15 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		dat->hText1 = text(DoesUserUsesChinese() ?
 			L"输出文件夹 (&D):" : L"Output &directory:", 0, 0, 1, 1, SS_CENTERIMAGE);
 		dat->hText6 = text(DoesUserUsesChinese() ?
-			L"音视频选项:" : L"Video&&Audio:", 0, 0, 1, 1, SS_CENTERIMAGE);
+			L"音视频选项:" : L"V/Audio options:", 0, 0, 1, 1, SS_CENTERIMAGE);
 		dat->hCheck3 = button(DoesUserUsesChinese() ?
 			L"关闭音频" : L"Disable audio", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
 		dat->hCheck4 = button(DoesUserUsesChinese() ?
 			L"关闭视频" : L"Disable video", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
+		dat->hCheck5 = button(DoesUserUsesChinese() ?
+			L"复制音频" : L"Copy audio", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
+		dat->hCheck6 = button(DoesUserUsesChinese() ?
+			L"复制视频" : L"Copy video", IDYES, 0, 0, 1, 1, BS_AUTOCHECKBOX);
 		dat->hText2 = text(DoesUserUsesChinese() ?
 			L"视频&编解码器:" : L"Video &Codec:", 0, 0, 1, 1, SS_CENTERIMAGE);
 		dat->hCombo2 = custom(L"", WC_COMBOBOXW, 0, 0, 1, 1, CBS_DROPDOWN);
@@ -224,14 +228,18 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		ListView_InsertColumn(data->hList1, 1, &lvc);
 
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mp4");
-		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"avi");
-		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mov");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"flv");
-		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"wmv");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mov");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mkv");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"ts");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"wmv");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"mpg");
 		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"ogg");
-		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"ts");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"avi");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"m2v");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"rm");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"rmvb");
+		SendMessage(data->hCombo1, CB_ADDSTRING, 0, (LPARAM)L"webm");
 		SendMessage(data->hCombo1, CB_SETCURSEL, 0, 0); // 默认 mp4
 
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"");
@@ -239,7 +247,7 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"h264");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"av1");
 		SendMessage(data->hCombo2, CB_ADDSTRING, 0, (LPARAM)L"copy");
-		SendMessage(data->hCombo2, CB_SETCURSEL, 0, 0); // 默认 保持原样
+		SendMessage(data->hCombo2, CB_SETCURSEL, 0, 0); // 默认 默认
 
 		DragAcceptFiles(hwnd, TRUE);
 
@@ -357,6 +365,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					SendMessage(data->hCheck3, BM_GETSTATE, 0, 0);
 				bool noVideo = BST_CHECKED &
 					SendMessage(data->hCheck4, BM_GETSTATE, 0, 0);
+				bool copyAudio = BST_CHECKED &
+					SendMessage(data->hCheck5, BM_GETSTATE, 0, 0);
+				bool copyVideo = BST_CHECKED &
+					SendMessage(data->hCheck6, BM_GETSTATE, 0, 0);
 				vector<wstring> params;
 				SetMprgWizAttribute(hWiz, MPRG_WIZARD_EXTENSIBLE_ATTRIBUTES::
 					WizAttrCancelHandler, (LONG_PTR)(void*)(bool(*)())([] {
@@ -377,6 +389,8 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 					params.clear();
 					if (noVideo) params.push_back(L"-vn");
 					if (noAudio) params.push_back(L"-an");
+					if (copyVideo) params.push_back(L"-c:v copy");
+					if (copyAudio) params.push_back(L"-c:a copy");
 					if (noVideo && noAudio) {
 						MessageBoxW(hwnd, DoesUserUsesChinese() ?
 							L"检测到选项冲突：\n- 不能同时禁用音频和视频。" :
@@ -384,8 +398,13 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 							"both video and audio.", 0, MB_ICONERROR);
 						break;
 					}
-					if (codec[0]) params.push_back(L"-vcodec \""s + codec + L"\"");
-					if (quality[0]) params.push_back(L"-crf \""s + quality + L"\"");
+					if (codec[0]) params.push_back(L"-c:v \""s + codec + L"\"");
+					if (quality[0]) {
+						if (wstring(codec).find(L"qsv") != wstring::npos) {
+							params.push_back(L"-global_quality \""s + quality + L"\"");
+						}
+						else params.push_back(L"-crf \""s + quality + L"\"");
+					}
 					if (fps[0]) params.push_back(L"-r \""s + fps + L"\"");
 					if (size[0] && _wcsicmp(size, L"0x0"))
 						params.push_back(L"-s \""s + size + L"\"");
@@ -558,6 +577,10 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SetWindowPos(data->hCheck3, 0, 120,
 			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hCheck4, 0, 240,
+			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hCheck5, 0, 360,
+			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
+		SetWindowPos(data->hCheck6, 0, 480,
 			rc.bottom - rc.top - 135, 110, 25, SWP_NOACTIVATE);
 		SetWindowPos(data->hText2, 0, 10,
 			rc.bottom - rc.top - 105, 110, 25, SWP_NOACTIVATE);

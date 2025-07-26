@@ -38,7 +38,8 @@ int main()
 			if (filename.ends_with(L".MTL.dll")) {
 				return (int)Process.StartAndWait(L"\"" + GetProgramDirW() +
 					L"\" --type=app --app-type=dll --dll-host-type="
-					"default --dll-file=\"" + filename + L"\" ");
+					"default --dll-file=\"" + filename + L"\" --- " +
+					GetCommandLineW()); // attach original paramters
 			}
 		}
 		return ERROR_INVALID_PARAMETER;

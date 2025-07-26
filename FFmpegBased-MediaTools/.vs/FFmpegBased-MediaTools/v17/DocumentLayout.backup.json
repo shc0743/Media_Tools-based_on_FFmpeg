@@ -1,0 +1,132 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{38B21AC2-6F87-4795-B12C-4D8628050500}|VideoIntegratedTool\\VideoIntegratedTool.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\VideoIntegratedTool\\dllmain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{38B21AC2-6F87-4795-B12C-4D8628050500}|VideoIntegratedTool\\VideoIntegratedTool.vcxproj|solutionrelative:VideoIntegratedTool\\dllmain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A1641000-EC26-4D05-BE9E-2DADEEEE89DE}|FFDownloader\\FFDownloader.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\FFDownloader\\dllmain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A1641000-EC26-4D05-BE9E-2DADEEEE89DE}|FFDownloader\\FFDownloader.vcxproj|solutionrelative:FFDownloader\\dllmain.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4817251F-01E3-407B-A57C-8FEBB45322D8}|MediaToolsLoader\\MediaToolsLoader.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\MediaToolsLoader.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{4817251F-01E3-407B-A57C-8FEBB45322D8}|MediaToolsLoader\\MediaToolsLoader.vcxproj|solutionrelative:MediaToolsLoader\\MediaToolsLoader.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4817251F-01E3-407B-A57C-8FEBB45322D8}|MediaToolsLoader\\MediaToolsLoader.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\ui.main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{4817251F-01E3-407B-A57C-8FEBB45322D8}|MediaToolsLoader\\MediaToolsLoader.vcxproj|solutionrelative:MediaToolsLoader\\ui.main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\software\\Program\\source\\git\\github.com\\shc0743\\MyLearn__\\MyUtilityManager\\utilman\\src\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4817251F-01E3-407B-A57C-8FEBB45322D8}|MediaToolsLoader\\MediaToolsLoader.vcxproj|D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\app.dllapp.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{4817251F-01E3-407B-A57C-8FEBB45322D8}|MediaToolsLoader\\MediaToolsLoader.vcxproj|solutionrelative:MediaToolsLoader\\app.dllapp.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d3750d8a-574b-4fb3-b7e2-aa8af40e8231}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "dllmain.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\VideoIntegratedTool\\dllmain.cpp",
+              "RelativeDocumentMoniker": "VideoIntegratedTool\\dllmain.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\VideoIntegratedTool\\dllmain.cpp",
+              "RelativeToolTip": "VideoIntegratedTool\\dllmain.cpp",
+              "ViewState": "AgIAAI4BAAAAAAAAAAAkwI8BAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-16T07:48:57.268Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "dllmain.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\FFDownloader\\dllmain.cpp",
+              "RelativeDocumentMoniker": "FFDownloader\\dllmain.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\FFDownloader\\dllmain.cpp",
+              "RelativeToolTip": "FFDownloader\\dllmain.cpp",
+              "ViewState": "AQIAANsAAAAAAAAAAAAywOkAAAACAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-05-28T16:16:02.362Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\MyLearn__\\MyUtilityManager\\utilman\\src\\main.cpp",
+              "RelativeDocumentMoniker": "..\\..\\MyLearn__\\MyUtilityManager\\utilman\\src\\main.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\MyLearn__\\MyUtilityManager\\utilman\\src\\main.cpp",
+              "RelativeToolTip": "..\\..\\MyLearn__\\MyUtilityManager\\utilman\\src\\main.cpp",
+              "ViewState": "AQIAADUAAAAAAAAAAAAzwDYAAAATAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-05-28T16:00:04.362Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "app.dllapp.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\app.dllapp.cpp",
+              "RelativeDocumentMoniker": "MediaToolsLoader\\app.dllapp.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\app.dllapp.cpp",
+              "RelativeToolTip": "MediaToolsLoader\\app.dllapp.cpp",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-05-28T15:18:47.548Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ui.main.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\ui.main.cpp",
+              "RelativeDocumentMoniker": "MediaToolsLoader\\ui.main.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\ui.main.cpp",
+              "RelativeToolTip": "MediaToolsLoader\\ui.main.cpp",
+              "ViewState": "AQIAALQCAAAAAAAAAAAiwM8CAAA2AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-03-03T05:43:12.135Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MediaToolsLoader.cpp",
+              "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\MediaToolsLoader.cpp",
+              "RelativeDocumentMoniker": "MediaToolsLoader\\MediaToolsLoader.cpp",
+              "ToolTip": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\Media_Tools-based_on_FFmpeg\\FFmpegBased-MediaTools\\MediaToolsLoader\\MediaToolsLoader.cpp",
+              "RelativeToolTip": "MediaToolsLoader\\MediaToolsLoader.cpp",
+              "ViewState": "AQIAABIAAAAAAAAAAAAAADMAAAAgAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-03-03T05:39:20.53Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
