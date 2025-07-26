@@ -196,10 +196,29 @@ static LRESULT CALLBACK WndProc_MainWnd(HWND hwnd, UINT message, WPARAM wp, LPAR
 		SendMessageW(dat->hEdit2, WM_SETTEXT, 0, (LONG_PTR)L""); 
 
 		PostMessage(hwnd, WM_USER + 0xf0, 0, 0);
+		PostMessage(hwnd, WM_USER + 0x1cc, 0, 0);
 
 
 	}
 	break;
+
+	case WM_USER + 0x1cc:
+		SetTimer(hwnd, 3, 5000, 0);
+		break;
+
+	case WM_TIMER:
+		switch (wp) {
+		case 3:
+			if (bProcessDoing) {
+				SetThreadExecutionState(ES_DISPLAY_REQUIRED);
+				SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED);
+			}
+			break;
+
+		default:
+			return DefWindowProcW(hwnd, message, wp, lp);
+		}
+		break;
 
 	case WM_USER + 0xf0:
 	{
