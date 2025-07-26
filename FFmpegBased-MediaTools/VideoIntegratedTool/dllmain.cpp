@@ -110,6 +110,7 @@ int UiMain(CmdLineW& cl) {
 	// 消息循环  
 	MSG msg = { 0 };
 	while (GetMessage(&msg, NULL, 0, 0)) {
+		if (IsDialogMessageW(hwnd, &msg)) continue;
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
